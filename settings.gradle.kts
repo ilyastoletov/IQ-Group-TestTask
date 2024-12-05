@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "IQ-Group-Test"
 include(":app")
- 
+include(":domain")
+include(":data")

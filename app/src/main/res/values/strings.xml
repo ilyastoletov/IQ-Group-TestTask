@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">IQ-Group-Test</string>
+    <string name="search_field_placeholder">Поиск</string>
+    <string name="vacancy_item_company">Компания:</string>
+    <string name="vacancy_item_location">Локация:</string>
 </resources>
