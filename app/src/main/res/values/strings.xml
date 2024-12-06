@@ -3,4 +3,12 @@
     <string name="search_field_placeholder">Поиск</string>
     <string name="vacancy_item_company">Компания:</string>
     <string name="vacancy_item_location">Локация:</string>
+    <string name="filters_side_sheet_title">Фильтры</string>
+    <string name="clear_filters">Очистить</string>
+    <string name="apply_filters_button">Показать все</string>
+    <string name="apply_sorting_button">Применить</string>
+    <string name="close_sorting_button">Отменить</string>
+    <string name="sorting_title">Сортировка</string>
+    <string name="relevance_sorting">По релевантности</string>
+    <string name="date_sorting">По дате публикации</string>
 </resources>

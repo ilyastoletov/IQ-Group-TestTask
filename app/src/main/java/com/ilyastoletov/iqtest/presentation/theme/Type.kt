@@ -9,6 +9,13 @@ import androidx.compose.ui.unit.sp
 import com.ilyastoletov.iqtest.R
 
 val Typography = Typography(
+    titleLarge = TextStyle(
+        fontFamily = FontFamily(Font(resId = R.font.inter_medium)),
+        fontWeight = FontWeight.Medium,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.5.sp,
+    ),
     titleMedium = TextStyle(
         fontFamily = FontFamily(Font(resId = R.font.inter_medium)),
         fontWeight = FontWeight.Medium,
