@@ -92,7 +92,7 @@ private fun SortingModal(
     onClose: () -> Unit
 ) {
 
-    var localSelectedSorting by remember { mutableStateOf(selected) }
+    var localSelectedSorting by remember(selected) { mutableStateOf(selected) }
 
     Column {
         Column(modifier = modifier) {
@@ -107,7 +107,7 @@ private fun SortingModal(
             )
             SortingItem(
                 text = stringResource(R.string.relevance_sorting),
-                selected = (selected == Sorting.RELEVANCE),
+                selected = (localSelectedSorting == Sorting.RELEVANCE),
                 onSelect = { localSelectedSorting = Sorting.RELEVANCE }
             )
             Spacer(
@@ -115,7 +115,7 @@ private fun SortingModal(
             )
             SortingItem(
                 text = stringResource(R.string.date_sorting),
-                selected = (selected == Sorting.DATE),
+                selected = (localSelectedSorting == Sorting.DATE),
                 onSelect = { localSelectedSorting = Sorting.DATE }
             )
             Spacer(

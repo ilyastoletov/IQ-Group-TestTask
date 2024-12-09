@@ -11,4 +11,10 @@
     <string name="sorting_title">Сортировка</string>
     <string name="relevance_sorting">По релевантности</string>
     <string name="date_sorting">По дате публикации</string>
+    <string name="vacancies_list_no_results">Результатов нет</string>
+    <string name="filters_loading_error_message">Ошибка загрузки</string>
+    <string name="experience_filter">Опыт работы</string>
+    <string name="employment_filter">Тип занятости</string>
+    <string name="schedule_filter">График работы</string>
+    <string name="area_filter">Регион</string>
 </resources>

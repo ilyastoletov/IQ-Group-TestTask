@@ -38,6 +38,7 @@ fun SearchField(
         modifier = modifier,
         value = query,
         onValueChange = onQueryChange,
+        singleLine = true,
         shape = RoundedCornerShape(percent = 100),
         placeholder = {
             Text(
