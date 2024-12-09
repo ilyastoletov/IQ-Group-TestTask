@@ -41,6 +41,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.ilyastoletov.domain.model.Sorting
 import com.ilyastoletov.domain.model.Vacancy
+import com.ilyastoletov.domain.model.filter.AppliedFilters
 import com.ilyastoletov.domain.model.filter.Filter
 import com.ilyastoletov.domain.util.Mock
 import com.ilyastoletov.iqtest.presentation.theme.IQGroupTestTheme
@@ -49,7 +50,6 @@ import com.ilyastoletov.iqtest.presentation.vacancies.screen.components.SearchFi
 import com.ilyastoletov.iqtest.presentation.vacancies.screen.components.SortingBottomSheet
 import com.ilyastoletov.iqtest.presentation.vacancies.screen.components.VacancyItem
 import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.VacanciesViewModel
-import com.ilyastoletov.domain.model.filter.FilterMap
 import com.ilyastoletov.iqtest.R
 import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.model.FiltersLoadingState
 import kotlinx.coroutines.Dispatchers
@@ -100,11 +100,11 @@ private fun Content(
     snackbarHostState: SnackbarHostState,
     vacancies: LazyPagingItems<Vacancy>,
     filters: Filter,
-    appliedFilters: FilterMap,
+    appliedFilters: AppliedFilters,
     filtersLoadingState: FiltersLoadingState,
     selectedSorting: Sorting,
     onSearch: (String) -> Unit,
-    onApplyFilters: (FilterMap) -> Unit,
+    onApplyFilters: (AppliedFilters) -> Unit,
     onClearFilters: () -> Unit,
     onChangeSorting: (Sorting) -> Unit,
     onRefresh: () -> Unit
@@ -176,8 +176,8 @@ private fun Content(
             appliedFilters = appliedFilters,
             loadingState = filtersLoadingState,
             onClear = onClearFilters,
+            onApplyFilters = onApplyFilters,
             onClose = { filtersSideSheetVisible = false },
-            onApplyFilters = onApplyFilters
         )
     }
 
@@ -251,12 +251,12 @@ private fun VacanciesScreenPreview() {
             selectedSorting = Sorting.RELEVANCE,
             filters = Mock.testFilter,
             filtersLoadingState = FiltersLoadingState.LOADED,
-            appliedFilters = mapOf(),
+            appliedFilters = AppliedFilters(),
             onSearch = {},
             onApplyFilters = {},
             onClearFilters = {},
             onChangeSorting = {},
-            onRefresh = {}
+            onRefresh = {},
         )
     }
 }

@@ -17,4 +17,5 @@
     <string name="employment_filter">Тип занятости</string>
     <string name="schedule_filter">График работы</string>
     <string name="area_filter">Регион</string>
+    <string name="salary_filter">Желаемая зарплата</string>
 </resources>

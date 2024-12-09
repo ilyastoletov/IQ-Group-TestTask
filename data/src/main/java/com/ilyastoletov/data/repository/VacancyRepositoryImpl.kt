@@ -9,6 +9,7 @@ import com.ilyastoletov.data.network.mapper.toRussianRegionsFilterValues
 import com.ilyastoletov.domain.model.Paged
 import com.ilyastoletov.domain.model.Sorting
 import com.ilyastoletov.domain.model.Vacancy
+import com.ilyastoletov.domain.model.filter.AppliedFilters
 import com.ilyastoletov.domain.model.filter.Filter
 import com.ilyastoletov.domain.model.filter.FilterMap
 import com.ilyastoletov.domain.repository.VacancyRepository
@@ -30,7 +31,7 @@ internal class VacancyRepositoryImpl(
     override suspend fun getVacanciesPaged(
         page: Int,
         searchQuery: String,
-        filters: FilterMap,
+        filters: AppliedFilters,
         sorting: Sorting
     ): Paged<Vacancy> = withContext(Dispatchers.IO) {
         val requestUrl = buildVacanciesRequestURL(page, searchQuery, filters, sorting)
@@ -41,7 +42,7 @@ internal class VacancyRepositoryImpl(
     private fun buildVacanciesRequestURL(
         page: Int,
         searchQuery: String,
-        filters: FilterMap,
+        filters: AppliedFilters,
         sorting: Sorting
     ): String {
         val url = StringBuilder(NetworkConstants.BASE_URL)
@@ -55,7 +56,10 @@ internal class VacancyRepositoryImpl(
             if (sorting == Sorting.DATE) {
                 append("&order_by=publication_time")
             }
-            appendWithFilterValues(filters)
+            filters.salary?.let {
+                append("&salary=$it&currency=RUR&only_with_salary=true")
+            }
+            appendWithFilterValues(filters.map)
         }
         return url.toString()
     }

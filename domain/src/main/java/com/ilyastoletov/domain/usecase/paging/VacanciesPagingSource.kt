@@ -4,13 +4,13 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.ilyastoletov.domain.model.Sorting
 import com.ilyastoletov.domain.model.Vacancy
-import com.ilyastoletov.domain.model.filter.FilterMap
+import com.ilyastoletov.domain.model.filter.AppliedFilters
 import com.ilyastoletov.domain.repository.VacancyRepository
 
 internal class VacanciesPagingSource(
     private val repository: VacancyRepository,
     private val searchQuery: String,
-    private val filters: FilterMap,
+    private val filters: AppliedFilters,
     private val sorting: Sorting
 ) : PagingSource<Int, Vacancy>() {
 

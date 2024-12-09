@@ -1,5 +1,6 @@
 package com.ilyastoletov.iqtest.presentation.vacancies.screen.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -41,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ilyastoletov.domain.model.filter.AppliedFilters
 import com.ilyastoletov.domain.model.filter.Filter
 import com.ilyastoletov.domain.model.filter.FilterKey
 import com.ilyastoletov.domain.model.filter.FilterValue
@@ -49,22 +53,32 @@ import com.ilyastoletov.iqtest.R
 import com.ilyastoletov.iqtest.presentation.theme.IQGroupTestTheme
 import com.ilyastoletov.domain.model.filter.FilterMap
 import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.model.FiltersLoadingState
+import kotlin.math.roundToInt
 
 
 @Composable
 fun FiltersSideSheet(
     filters: Filter,
-    appliedFilters: FilterMap,
+    appliedFilters: AppliedFilters,
     loadingState: FiltersLoadingState,
     onClose: () -> Unit,
     onClear: () -> Unit,
-    onApplyFilters: (FilterMap) -> Unit,
+    onApplyFilters: (AppliedFilters) -> Unit
 ) {
 
-    val localAppliedFilters = remember(appliedFilters) {
-        val filtersPairList = appliedFilters.map { it.toPair() }.toTypedArray()
+    val localFiltersMap = remember(appliedFilters) {
+        val filtersPairList = appliedFilters.map.map { it.toPair() }.toTypedArray()
         mutableStateMapOf(*filtersPairList)
     }
+
+    var salaryFilter by remember(appliedFilters) {
+        mutableStateOf(appliedFilters.salary)
+    }
+
+    BackHandler(
+        enabled = true,
+        onBack = onClose
+    )
 
     Scaffold(
         topBar = {
@@ -72,7 +86,7 @@ fun FiltersSideSheet(
                 onClose = onClose,
                 onClear = {
                     onClear()
-                    localAppliedFilters.clear()
+                    localFiltersMap.clear()
                 }
             )
         },
@@ -81,7 +95,12 @@ fun FiltersSideSheet(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        onApplyFilters.invoke(localAppliedFilters)
+                        onApplyFilters.invoke(
+                            AppliedFilters(
+                                map = localFiltersMap,
+                                salary = salaryFilter
+                            )
+                        )
                         onClose()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -117,12 +136,14 @@ fun FiltersSideSheet(
                     FiltersList(
                         modifier = Modifier.fillMaxSize(),
                         filters = filters,
-                        appliedFilters = appliedFilters,
+                        appliedFiltersMap = appliedFilters.map,
+                        salaryFilter = salaryFilter,
                         onToggle = { key, value ->
-                            val mutableFilters = localAppliedFilters[key]?.toMutableList() ?: mutableListOf()
+                            val mutableFilters = localFiltersMap[key]?.toMutableList() ?: mutableListOf()
                             mutableFilters.apply { if (value in this) remove(value) else add(value) }
-                            localAppliedFilters[key] = mutableFilters
-                        }
+                            localFiltersMap[key] = mutableFilters
+                        },
+                        onSalaryFilterChange = { salaryFilter = it }
                     )
                 }
 
@@ -186,8 +207,10 @@ private fun TopBar(
 private fun FiltersList(
     modifier: Modifier = Modifier,
     filters: Filter,
-    appliedFilters: FilterMap,
-    onToggle: (FilterKey, FilterValue) -> Unit
+    appliedFiltersMap: FilterMap,
+    salaryFilter: Int?,
+    onToggle: (FilterKey, FilterValue) -> Unit,
+    onSalaryFilterChange: (Int) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -198,25 +221,29 @@ private fun FiltersList(
         FilterItem(
             title = stringResource(R.string.experience_filter),
             items = filters.experience,
-            selected = appliedFilters[FilterKey.EXPERIENCE].orEmpty(),
+            selected = appliedFiltersMap[FilterKey.EXPERIENCE].orEmpty(),
             onToggleItem = { onToggle.invoke(FilterKey.EXPERIENCE, it) }
         )
         FilterItem(
             title = stringResource(R.string.employment_filter),
             items = filters.employment,
-            selected = appliedFilters[FilterKey.EMPLOYMENT].orEmpty(),
+            selected = appliedFiltersMap[FilterKey.EMPLOYMENT].orEmpty(),
             onToggleItem = { onToggle.invoke(FilterKey.EMPLOYMENT, it) }
         )
         FilterItem(
             title = stringResource(R.string.schedule_filter),
             items = filters.schedule,
-            selected = appliedFilters[FilterKey.SCHEDULE].orEmpty(),
+            selected = appliedFiltersMap[FilterKey.SCHEDULE].orEmpty(),
             onToggleItem = { onToggle.invoke(FilterKey.SCHEDULE, it) }
+        )
+        SalarySlider(
+            value = salaryFilter,
+            onValueChange = onSalaryFilterChange
         )
         FilterItem(
             title = stringResource(R.string.area_filter),
             items = filters.area,
-            selected = appliedFilters[FilterKey.AREA].orEmpty(),
+            selected = appliedFiltersMap[FilterKey.AREA].orEmpty(),
             onToggleItem = { onToggle.invoke(FilterKey.AREA, it) }
         )
     }
@@ -289,6 +316,62 @@ private fun FilterOption(
     }
 }
 
+@Composable
+private fun SalarySlider(
+    value: Int?,
+    onValueChange: (Int) -> Unit
+) {
+
+    var currentValue by remember(value) { mutableStateOf(value?.toFloat()) }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.salary_filter),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = if (currentValue == null) "Не указана" else "${currentValue?.roundToInt()} ₽",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+        Slider(
+            value = currentValue ?: 0F,
+            valueRange = (0F..500_000F),
+            steps = 500,
+            onValueChangeFinished = { onValueChange(currentValue!!.roundToInt()) },
+            onValueChange = { number ->
+                currentValue = number.roundToNearestThousand()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.secondary,
+                activeTrackColor = MaterialTheme.colorScheme.secondary,
+                inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            )
+        )
+    }
+}
+
+private fun Float.roundToNearestThousand(): Float {
+    val remainder = this % 1000F
+    return if (remainder >= 500F) {
+        this + (1000F - remainder)
+    } else {
+        this - remainder
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun FiltersSideSheetPreview() {
@@ -296,10 +379,10 @@ private fun FiltersSideSheetPreview() {
         FiltersSideSheet(
             filters = Mock.testFilter,
             loadingState = FiltersLoadingState.LOADING,
-            appliedFilters = mapOf(),
+            appliedFilters = AppliedFilters(),
             onClose = {},
             onApplyFilters = {},
-            onClear = {}
+            onClear = {},
         )
     }
 }

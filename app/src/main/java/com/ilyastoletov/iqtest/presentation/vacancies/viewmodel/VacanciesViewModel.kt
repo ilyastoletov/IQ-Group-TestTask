@@ -3,8 +3,8 @@ package com.ilyastoletov.iqtest.presentation.vacancies.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ilyastoletov.domain.model.Sorting
+import com.ilyastoletov.domain.model.filter.AppliedFilters
 import com.ilyastoletov.domain.model.filter.Filter
-import com.ilyastoletov.domain.model.filter.FilterMap
 import com.ilyastoletov.domain.usecase.GetPagedVacanciesUseCase
 import com.ilyastoletov.domain.usecase.LoadFiltersUseCase
 import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.model.FiltersLoadingState
@@ -37,7 +37,7 @@ class VacanciesViewModel @Inject constructor(
     private val _filtersLoadingState = MutableStateFlow(FiltersLoadingState.LOADING)
     val filtersLoadingState = _filtersLoadingState.asStateFlow()
 
-    private val _selectedFilters = MutableStateFlow<FilterMap>(mapOf())
+    private val _selectedFilters = MutableStateFlow(AppliedFilters())
     val selectedFilters = _selectedFilters.asStateFlow()
 
     private val _selectedSorting = MutableStateFlow(Sorting.RELEVANCE)
@@ -50,7 +50,12 @@ class VacanciesViewModel @Inject constructor(
     val vacancies = combine(searchQuery, _selectedFilters, _selectedSorting, refreshPull) { query, filters, sorting, _ ->
         Triple(query, filters, sorting)
     }.flatMapLatest { (query, filters, sort) ->
-        getPagedVacanciesUseCase.invoke(query, filters, sort, viewModelScope)
+        getPagedVacanciesUseCase.invoke(
+            searchQuery = query,
+            filters = filters,
+            sorting = sort,
+            cacheScope = viewModelScope
+        )
     }
 
     init {
@@ -76,12 +81,12 @@ class VacanciesViewModel @Inject constructor(
         searchQuery.update { query }
     }
 
-    fun applyFilters(filters: FilterMap) {
+    fun applyFilters(filters: AppliedFilters) {
         _selectedFilters.update { filters }
     }
 
     fun clearFilters() {
-        _selectedFilters.update { emptyMap() }
+        _selectedFilters.update { AppliedFilters() }
     }
 
     fun changeSorting(sorting: Sorting) {
