@@ -20,7 +20,7 @@ private fun VacancyResponse.toVacancy(): Vacancy {
         title = name,
         salary = salary?.getDisplaySalary().orEmpty(),
         company = employer.name,
-        location = area.name
+        location = area.name,
     )
 }
 

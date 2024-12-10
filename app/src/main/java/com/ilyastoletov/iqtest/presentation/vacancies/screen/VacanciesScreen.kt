@@ -6,14 +6,19 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material3.IconButton
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -24,13 +29,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +47,7 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.ilyastoletov.domain.model.Sorting
 import com.ilyastoletov.domain.model.Vacancy
@@ -51,13 +61,17 @@ import com.ilyastoletov.iqtest.presentation.vacancies.screen.components.SortingB
 import com.ilyastoletov.iqtest.presentation.vacancies.screen.components.VacancyItem
 import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.VacanciesViewModel
 import com.ilyastoletov.iqtest.R
-import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.model.FiltersLoadingState
+import com.ilyastoletov.iqtest.presentation.extension.toggleItem
+import com.ilyastoletov.iqtest.presentation.shared.model.LoadingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
-fun VacanciesScreen(viewModel: VacanciesViewModel) {
+fun VacanciesScreen(
+    viewModel: VacanciesViewModel,
+    openFavouritesScreen: () -> Unit
+) {
 
     val sorting by viewModel.selectedSorting.collectAsState()
 
@@ -88,6 +102,8 @@ fun VacanciesScreen(viewModel: VacanciesViewModel) {
         onApplyFilters = { newFilters -> viewModel.applyFilters(newFilters) },
         onClearFilters = { viewModel.clearFilters() },
         onChangeSorting = { sort -> viewModel.changeSorting(sort) },
+        onClickFavourite = { vacancy -> viewModel.toggleFavourite(vacancy) },
+        onOpenFavourites = openFavouritesScreen,
         onRefresh = { viewModel.refresh() }
     )
 
@@ -101,12 +117,14 @@ private fun Content(
     vacancies: LazyPagingItems<Vacancy>,
     filters: Filter,
     appliedFilters: AppliedFilters,
-    filtersLoadingState: FiltersLoadingState,
+    filtersLoadingState: LoadingState,
     selectedSorting: Sorting,
     onSearch: (String) -> Unit,
     onApplyFilters: (AppliedFilters) -> Unit,
     onClearFilters: () -> Unit,
     onChangeSorting: (Sorting) -> Unit,
+    onClickFavourite: (Vacancy) -> Unit,
+    onOpenFavourites: () -> Unit,
     onRefresh: () -> Unit
 ) {
 
@@ -117,21 +135,39 @@ private fun Content(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             val focusManager = LocalFocusManager.current
-            var searchQuery by remember { mutableStateOf("") }
+            var searchQuery by rememberSaveable { mutableStateOf("") }
 
-            SearchField(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(all = 16.dp),
-                query = searchQuery,
-                onQueryChange = { searchQuery = it },
-                onSearch = {
-                    onSearch.invoke(searchQuery)
-                    focusManager.clearFocus()
-                },
-                onClickFilters = { filtersSideSheetVisible = true },
-                onClickSorting = { sortingBottomSheetVisible = true }
-            )
+                    .padding(all = 16.dp)
+            ) {
+                SearchField(
+                    modifier = Modifier.weight(0.9f),
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    onSearch = {
+                        onSearch.invoke(searchQuery)
+                        focusManager.clearFocus()
+                    },
+                    onClickFilters = { filtersSideSheetVisible = true },
+                    onClickSorting = { sortingBottomSheetVisible = true }
+                )
+                Spacer(
+                    modifier = Modifier.width(16.dp)
+                )
+                IconButton(
+                    modifier = Modifier.weight(0.1f),
+                    onClick = onOpenFavourites
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_star_outlined),
+                        tint = MaterialTheme.colorScheme.outlineVariant,
+                        contentDescription = null
+                    )
+                }
+            }
+
         },
     ) { scaffoldPadding ->
 
@@ -154,7 +190,8 @@ private fun Content(
         ) {
             PagedVacanciesList(
                 modifier = Modifier.fillMaxSize(),
-                vacancies = vacancies
+                vacancies = vacancies,
+                onClickFavourite = onClickFavourite
             )
             PullRefreshIndicator(
                 modifier = Modifier.align(Alignment.TopCenter),
@@ -194,8 +231,10 @@ private fun Content(
 @Composable
 private fun PagedVacanciesList(
     modifier: Modifier = Modifier,
-    vacancies: LazyPagingItems<Vacancy>
+    vacancies: LazyPagingItems<Vacancy>,
+    onClickFavourite: (Vacancy) -> Unit
 ) {
+    val localFavouritesList = remember { mutableStateListOf<Vacancy>() }
 
     LazyColumn(
         modifier = modifier,
@@ -209,7 +248,8 @@ private fun PagedVacanciesList(
 
         items(
             count = vacancies.itemCount,
-            key = vacancies.itemKey { it.id }
+            key = vacancies.itemKey { it.id },
+            contentType = vacancies.itemContentType { it::class.simpleName }
         ) { index ->
             val item = vacancies.get(index)
 
@@ -218,7 +258,12 @@ private fun PagedVacanciesList(
                     title = vacancy.title,
                     salary = vacancy.salary,
                     company = vacancy.company,
-                    location = vacancy.location
+                    location = vacancy.location,
+                    isFavourite = (vacancy.isFavourite || vacancy in localFavouritesList),
+                    onClickFavourite = {
+                        localFavouritesList.toggleItem(vacancy)
+                        onClickFavourite(item)
+                    }
                 )
             }
         }
@@ -250,13 +295,15 @@ private fun VacanciesScreenPreview() {
             vacancies = emptyVacanciesLazyPagingItems,
             selectedSorting = Sorting.RELEVANCE,
             filters = Mock.testFilter,
-            filtersLoadingState = FiltersLoadingState.LOADED,
+            filtersLoadingState = LoadingState.LOADED,
             appliedFilters = AppliedFilters(),
             onSearch = {},
             onApplyFilters = {},
             onClearFilters = {},
             onChangeSorting = {},
             onRefresh = {},
+            onClickFavourite = {},
+            onOpenFavourites = {}
         )
     }
 }

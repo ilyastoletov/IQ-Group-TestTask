@@ -6,6 +6,9 @@ import com.ilyastoletov.data.network.extension.awaitResult
 import com.ilyastoletov.data.network.mapper.toFilter
 import com.ilyastoletov.data.network.mapper.toPagedVacancies
 import com.ilyastoletov.data.network.mapper.toRussianRegionsFilterValues
+import com.ilyastoletov.data.storage.dao.VacancyDao
+import com.ilyastoletov.data.storage.mapper.toEntity
+import com.ilyastoletov.data.storage.mapper.toVacancy
 import com.ilyastoletov.domain.model.Paged
 import com.ilyastoletov.domain.model.Sorting
 import com.ilyastoletov.domain.model.Vacancy
@@ -17,7 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class VacancyRepositoryImpl(
-    private val api: VacancyApi
+    private val api: VacancyApi,
+    private val dao: VacancyDao
 ) : VacancyRepository {
 
     override suspend fun getFilters(): Result<Filter> {
@@ -28,6 +32,17 @@ internal class VacancyRepositoryImpl(
         return api.getDictionaries().awaitResult().mapCatching { it.toFilter(areas) }
     }
 
+    override suspend fun toggleFavourite(model: Vacancy): Result<Unit> = runCatching {
+        val allFavourites = dao.getAllVacancies()
+        val itemInList = allFavourites.any { it.id == model.id }
+
+        if (itemInList) {
+            dao.deleteVacancy(model.id)
+        } else {
+            dao.insertVacancyEntity(model.toEntity())
+        }
+    }
+
     override suspend fun getVacanciesPaged(
         page: Int,
         searchQuery: String,
@@ -36,7 +51,7 @@ internal class VacancyRepositoryImpl(
     ): Paged<Vacancy> = withContext(Dispatchers.IO) {
         val requestUrl = buildVacanciesRequestURL(page, searchQuery, filters, sorting)
         val vacanciesPortion = api.getVacancies(requestUrl).awaitResult().getOrThrow()
-        vacanciesPortion.toPagedVacancies()
+        vacanciesPortion.toPagedVacancies().markFavourite()
     }
 
     private fun buildVacanciesRequestURL(
@@ -75,6 +90,12 @@ internal class VacancyRepositoryImpl(
             }
         }
         return this
+    }
+
+    private suspend fun Paged<Vacancy>.markFavourite(): Paged<Vacancy> {
+        val allFavourites = dao.getAllVacancies().map { it.toVacancy() }
+        val mappedItems = this.items.map { it.copy(isFavourite = it in allFavourites) }
+        return copy(items = mappedItems)
     }
 
 }

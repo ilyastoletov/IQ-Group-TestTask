@@ -1,8 +1,12 @@
 package com.ilyastoletov.iqtest.di
 
+import com.ilyastoletov.domain.repository.FavouriteRepository
 import com.ilyastoletov.domain.repository.VacancyRepository
+import com.ilyastoletov.domain.usecase.ClearFavouritesUseCase
+import com.ilyastoletov.domain.usecase.GetAllFavouritesUseCase
 import com.ilyastoletov.domain.usecase.GetPagedVacanciesUseCase
 import com.ilyastoletov.domain.usecase.LoadFiltersUseCase
+import com.ilyastoletov.domain.usecase.ToggleFavouriteUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,6 +24,21 @@ class DomainModule {
     @Provides
     fun provideGetPagedVacanciesUseCase(repository: VacancyRepository): GetPagedVacanciesUseCase {
         return GetPagedVacanciesUseCase(repository)
+    }
+
+    @Provides
+    fun provideToggleFavouriteUseCase(repository: VacancyRepository): ToggleFavouriteUseCase {
+        return ToggleFavouriteUseCase(repository)
+    }
+
+    @Provides
+    fun provideGetAllFavouritesUseCase(repository: FavouriteRepository): GetAllFavouritesUseCase {
+        return GetAllFavouritesUseCase(repository)
+    }
+
+    @Provides
+    fun provideClearFavouritesUseCase(repository: FavouriteRepository): ClearFavouritesUseCase {
+        return ClearFavouritesUseCase(repository)
     }
 
 }

@@ -28,7 +28,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,7 +51,9 @@ import com.ilyastoletov.domain.util.Mock
 import com.ilyastoletov.iqtest.R
 import com.ilyastoletov.iqtest.presentation.theme.IQGroupTestTheme
 import com.ilyastoletov.domain.model.filter.FilterMap
-import com.ilyastoletov.iqtest.presentation.vacancies.viewmodel.model.FiltersLoadingState
+import com.ilyastoletov.iqtest.presentation.extension.toggleItem
+import com.ilyastoletov.iqtest.presentation.shared.ClearTextButton
+import com.ilyastoletov.iqtest.presentation.shared.model.LoadingState
 import kotlin.math.roundToInt
 
 
@@ -60,7 +61,7 @@ import kotlin.math.roundToInt
 fun FiltersSideSheet(
     filters: Filter,
     appliedFilters: AppliedFilters,
-    loadingState: FiltersLoadingState,
+    loadingState: LoadingState,
     onClose: () -> Unit,
     onClear: () -> Unit,
     onApplyFilters: (AppliedFilters) -> Unit
@@ -126,13 +127,13 @@ fun FiltersSideSheet(
         ) {
             when(loadingState) {
 
-                FiltersLoadingState.LOADING -> {
+                LoadingState.LOADING -> {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
 
-                FiltersLoadingState.LOADED -> {
+                LoadingState.LOADED -> {
                     FiltersList(
                         modifier = Modifier.fillMaxSize(),
                         filters = filters,
@@ -140,16 +141,16 @@ fun FiltersSideSheet(
                         salaryFilter = salaryFilter,
                         onToggle = { key, value ->
                             val mutableFilters = localFiltersMap[key]?.toMutableList() ?: mutableListOf()
-                            mutableFilters.apply { if (value in this) remove(value) else add(value) }
+                            mutableFilters.toggleItem(value)
                             localFiltersMap[key] = mutableFilters
                         },
                         onSalaryFilterChange = { salaryFilter = it }
                     )
                 }
 
-                FiltersLoadingState.ERROR -> {
+                LoadingState.ERROR -> {
                     Text(
-                        text = stringResource(R.string.filters_loading_error_message),
+                        text = stringResource(R.string.loading_error_message),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -186,15 +187,7 @@ private fun TopBar(
             }
         },
         actions = {
-            TextButton(
-                onClick = onClear
-            ) {
-                Text(
-                    text = stringResource(R.string.clear_filters),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(0.5f)
-                )
-            }
+            ClearTextButton(onClear)
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -378,7 +371,7 @@ private fun FiltersSideSheetPreview() {
     IQGroupTestTheme {
         FiltersSideSheet(
             filters = Mock.testFilter,
-            loadingState = FiltersLoadingState.LOADING,
+            loadingState = LoadingState.LOADING,
             appliedFilters = AppliedFilters(),
             onClose = {},
             onApplyFilters = {},

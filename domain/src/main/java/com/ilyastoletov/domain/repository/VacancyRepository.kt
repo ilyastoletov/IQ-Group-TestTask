@@ -17,4 +17,6 @@ interface VacancyRepository {
         sorting: Sorting
     ): Paged<Vacancy>
 
+    suspend fun toggleFavourite(model: Vacancy): Result<Unit>
+
 }

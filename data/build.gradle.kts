@@ -42,6 +42,10 @@ dependencies {
     implementation(libs.squareup.retrofit.converter.jackson)
     implementation(libs.squareup.okhttp.logger)
 
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
+
     implementation(libs.dagger.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     kapt(libs.dagger.hilt.compiler)
